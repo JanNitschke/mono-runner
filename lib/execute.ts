@@ -96,6 +96,8 @@ const startScriptAndDeps = async (
 	const { parallel = false, noWait = false, ignoreCode = false} = options;
 	let exitCode = 0;
 
+	const allExits: Promise<number>[] = [];
+
 	const startScript = async (pcg: LocalPackage) => {
 		const deps = pcg.localDependencies.map(async (dep) => {
 			if (started.has(dep.name)) {
@@ -127,6 +129,14 @@ const startScriptAndDeps = async (
 		])
 		if(parallel){
 			await isReady(pcg.name, pcg.path, pcg.dependencies);
+			if(pcg === localPackage){
+				exitCode = Math.max(exitCode, await worker.exit);
+				if(exitCode !== 0 && !ignoreCode){
+					process.exit(exitCode);
+				}
+			}else if(Array.isArray(localPackage)){
+				allExits.push(worker.exit);
+			}
 		}else{
 			exitCode = Math.max(await worker.exit);
 			if(exitCode !== 0 && !ignoreCode){
@@ -137,6 +147,8 @@ const startScriptAndDeps = async (
 
 	if(Array.isArray(localPackage)){
 		await Promise.all(localPackage.map((pcg) => startScript(pcg)));
+		const code = (await Promise.all(allExits)).reduce((a, b) => Math.max(a, b), 0);
+		return code;
 	}else{
 		await startScript(localPackage);
 	}
@@ -171,16 +183,20 @@ export const execute = async (
 		const localPackage = packages.find((p) => p.name === pcg);
 
 		if (!localPackage) {
-			throw new Error(`Package ${pcg} not found`);
+			console.error(`Package ${pcg} not found`);
+			return;
 		}
 	
-		const streams = await startScriptAndDeps(
+		const exitCode = await startScriptAndDeps(
 			runtime,
 			localPackage,
 			command,
 			args,
 			options
 		);
+		if(options.parallel){
+			process.exit(exitCode);
+		};
+		
 	}
-	// drawConsole(streams);
 };

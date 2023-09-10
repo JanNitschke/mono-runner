@@ -55,6 +55,7 @@ if(overridePckManager){
 	pckManager = overridePckManager;
 }
 console.log("running scripts using:", pckManager);
+console.log("---------");
 
 if(toolArgs.includes("--init")){
 	genAlias(toolArgs.includes("--alias"));	
