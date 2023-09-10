@@ -1,21 +1,23 @@
 {
   "name": "mono-runner",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "type": "module",
+  "author": "Jan Nitschke",
   "scripts": {
     "build": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js",
-    "dev": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js --watch"
+    "dev": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js --watch",
+    "prepare": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JanNitschke/mono-runner.git"
   },
   "devDependencies": {
-    "bun-types": "latest"
-  },
-  "peerDependencies": {
+    "bun-types": "latest",
+    "get-tsconfig": "^4.7.0",
     "typescript": "^5.0.0"
   },
   "bin": {
     "mono": "dist/cli.js"
-  },
-  "dependencies": {
-    "get-tsconfig": "^4.7.0"
   }
 }
