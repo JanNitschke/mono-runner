@@ -1,0 +1,19 @@
+{
+  "name": "mono-runner",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js",
+    "dev": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js --watch"
+  },
+  "devDependencies": {
+    
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "bin": {
+    "mono": "dist/cli.js"
+  }
+}
