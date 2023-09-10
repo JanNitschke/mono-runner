@@ -7,6 +7,7 @@ import { getPackageConfig } from "./config";
 
 export type ExecOptions = {
 	parallel?: boolean;
+	noWait?: boolean;
 };
 
 export type StreamInfo = {
@@ -43,7 +44,7 @@ const holdBeforeFolderExists = async (filePath: string, timeout: number) => {
 };
 
 const spawnWorker = (runtime: string, pcg: LocalPackage, command: string, args: string[] = []) => {
-
+	
 	const p = spawn(runtime, ["run", command, ...args], {
 		cwd: join(process.cwd(), pcg.path),
 		env: process.env,
@@ -88,27 +89,30 @@ const isReady = async(packageName: string, packagePath: string, packageDeps: str
 
 const startScriptAndDeps = async (
 	runtime: string,
-	localPackage: LocalPackage,
+	localPackage: LocalPackage|LocalPackage[],
 	command: string,
 	args: string[],
 	options: ExecOptions
 ) => {
 	const streams: StreamInfo[] = [];
-	const started: LocalPackage[] = [];
-	const { parallel = false} = options;
+	const started: Map<string, Promise<void>> = new Map();
+	const { parallel = false, noWait = false} = options;
 
 	const startScript = async (pcg: LocalPackage) => {
 		const deps = pcg.localDependencies.map(async (dep) => {
-			if (started.includes(dep)) {
-				return;
+			if (started.has(dep.name)) {
+				return started.get(dep.name);
 			}
 			if(!dep.scripts.includes(command)){
 				return;
 			}
-			const scr = await startScript(dep);
-			return scr;
+			const scr = startScript(dep);
+			started.set(dep.name, scr);
+			return await scr;
 		});
-		await Promise.all(deps);
+		if(!noWait){
+			await Promise.all(deps);
+		}
 		const worker = spawnWorker(runtime, pcg, command, args);
 
 		drawConsole([
@@ -130,7 +134,11 @@ const startScriptAndDeps = async (
 		}
 	};
 
-	await startScript(localPackage);
+	if(Array.isArray(localPackage)){
+		await Promise.all(localPackage.map((pcg) => startScript(pcg)));
+	}else{
+		await startScript(localPackage);
+	}
 
 	return streams;
 };
@@ -148,18 +156,30 @@ export const execute = async (
 	// ausgabe
 
 	const packages = await getLocalPackages();
-	const localPackage = packages.find((p) => p.name === pcg);
+	
+	if(pcg === ""){	
+		const streams = await startScriptAndDeps(
+			runtime,
+			packages,
+			command,
+			args,
+			options
+		);
+	}else{
 
-	if (!localPackage) {
-		throw new Error(`Package ${pcg} not found`);
+		const localPackage = packages.find((p) => p.name === pcg);
+
+		if (!localPackage) {
+			throw new Error(`Package ${pcg} not found`);
+		}
+	
+		const streams = await startScriptAndDeps(
+			runtime,
+			localPackage,
+			command,
+			args,
+			options
+		);
 	}
-
-	const streams = await startScriptAndDeps(
-		runtime,
-		localPackage,
-		command,
-		args,
-		options
-	);
 	// drawConsole(streams);
 };

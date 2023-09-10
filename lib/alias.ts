@@ -1,9 +1,10 @@
 import { writeFileSync } from "fs";
 import { getPackageJson, getWorkspacePackages } from "./packages";
-import { join } from "path";
+import { join,  } from "path";
 import { getPackageConfig } from "./config";
+import { getTsconfig } from "get-tsconfig";
 
-export const genAlias = async () => {
+export const genAlias = async (alias: boolean) => {
 	const info = await getWorkspacePackages();
 	const paths: Record<string, string[]> = {};
 	const prms = Object.keys(info).map(async(name) => {
@@ -28,13 +29,44 @@ export const genAlias = async () => {
 
 	await Promise.all(prms);
 
-	const out = {
+	const base = {
 		compilerOptions: {
 			baseUrl: "./",
 			paths: paths,
 		},
 	};
-	writeFileSync(join(process.cwd(), "tsconfig.alias.json"), JSON.stringify(out, null, 2));
+
+	if(alias){
+		const out = base;
+		writeFileSync(join(process.cwd(), "tsconfig.alias.json"), JSON.stringify(out, null, 2));
+	}else{
+		const tscPath = join(process.cwd(), "tsconfig.json");
+		const tsConfig = getTsconfig(tscPath);
+
+		if(!tsConfig){
+			console.log("could not find tsconfig.json file, creating one...");
+			writeFileSync(tscPath, JSON.stringify(base, null, 2));
+			return
+		}
+		const config = tsConfig.config;
+
+		if(!config.compilerOptions){
+			config.compilerOptions = {};
+		}
+		if(!config.compilerOptions.baseUrl){
+			config.compilerOptions.baseUrl = "./";
+		}			
+		if(!config.compilerOptions.paths){
+			config.compilerOptions.paths = paths;
+		}else{
+			config.compilerOptions.paths = {...config.compilerOptions.paths, ...paths};
+		}
+
+		writeFileSync(join(process.cwd(), "tsconfig.json"), JSON.stringify(config, null, 2));
+
+
+	}
+	
 };
 
 

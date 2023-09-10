@@ -7,7 +7,6 @@
     "dev": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js --watch"
   },
   "devDependencies": {
-    
     "bun-types": "latest"
   },
   "peerDependencies": {
@@ -15,5 +14,8 @@
   },
   "bin": {
     "mono": "dist/cli.js"
+  },
+  "dependencies": {
+    "get-tsconfig": "^4.7.0"
   }
 }

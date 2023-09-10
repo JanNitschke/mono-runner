@@ -1,4 +1,4 @@
-import { exists, readdir } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import { join } from "path";
 
 export type LocalPackage = {
@@ -13,16 +13,21 @@ type LocalPackageInfo = {
 	[name: string]: string;
 };
 
+export const readFileJSON = async (path: string) => {
+	const data = await readFile(path, { encoding: "utf-8" });
+	return JSON.parse(data);
+};
+
 export const getWorkspaces = async (): Promise<string[]> => {
 	try {
-		const pJson = await Bun.file("package.json").json();
+		const pJson = await readFileJSON(join(process.cwd(), "package.json"));
 		const base = pJson.workspaces || [];
 		const workspaces =  base.map((w: string) => w.replace("/*", ""));
 
 		const existing: string[] = [];
 		await Promise.all(workspaces.map(async(w: string) => {
 			const path = join(process.cwd(), w);
-			if(await exists(path)){
+			if(await access(path).then(() => true).catch(() => false)){
 				existing.push(w);
 			}
 		}));
@@ -34,7 +39,7 @@ export const getWorkspaces = async (): Promise<string[]> => {
 };
 
 export const getPackageJson = async (path: string) => {
-	const pJson = await Bun.file(join(path, "package.json")).json();
+	const pJson = await readFileJSON(join(path, "package.json"));
 	return pJson;
 };
 
