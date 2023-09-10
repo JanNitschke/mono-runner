@@ -64,27 +64,6 @@ export const genAlias = async (alias: boolean) => {
 
 		writeFileSync(join(process.cwd(), "tsconfig.json"), JSON.stringify(config, null, 2));
 
-
 	}
 	
 };
-
-
-
-/*
-
-{
-  "compilerOptions": {
-    "baseUrl": "packages",
-    "paths": {
-      "@dev/ui": [
-        "ui/src/lib"
-      ],
-      "@dev/ui/*": [
-        "ui/src/lib/*"
-      ]
-    }
-  }
-}
-
- */

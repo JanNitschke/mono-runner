@@ -8,6 +8,7 @@ import { getPackageConfig } from "./config";
 export type ExecOptions = {
 	parallel?: boolean;
 	noWait?: boolean;
+	ignoreCode?: boolean;
 };
 
 export type StreamInfo = {
@@ -50,12 +51,9 @@ const spawnWorker = (runtime: string, pcg: LocalPackage, command: string, args: 
 		env: process.env,
 	});
 
-	const exit = new Promise<void>((resolve) => {
-		p.on("exit", () => {
-			resolve();
-		});
-		p.stdout.on("end", () => {
-			resolve();
+	const exit = new Promise<number>((resolve) => {
+		p.on("exit", (e) => {
+			resolve(e || 0);
 		});
 	});
 
@@ -94,9 +92,9 @@ const startScriptAndDeps = async (
 	args: string[],
 	options: ExecOptions
 ) => {
-	const streams: StreamInfo[] = [];
 	const started: Map<string, Promise<void>> = new Map();
-	const { parallel = false, noWait = false} = options;
+	const { parallel = false, noWait = false, ignoreCode = false} = options;
+	let exitCode = 0;
 
 	const startScript = async (pcg: LocalPackage) => {
 		const deps = pcg.localDependencies.map(async (dep) => {
@@ -130,7 +128,10 @@ const startScriptAndDeps = async (
 		if(parallel){
 			await isReady(pcg.name, pcg.path, pcg.dependencies);
 		}else{
-			await worker.exit;
+			exitCode = Math.max(await worker.exit);
+			if(exitCode !== 0 && !ignoreCode){
+				process.exit(exitCode);
+			}
 		}
 	};
 
@@ -140,7 +141,7 @@ const startScriptAndDeps = async (
 		await startScript(localPackage);
 	}
 
-	return streams;
+	return exitCode;
 };
 
 export const execute = async (

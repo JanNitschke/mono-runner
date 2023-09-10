@@ -47,6 +47,9 @@ if(toolArgs.includes("--all")){
 if(toolArgs.includes("--no-wait")){
 	options.noWait = true;
 }
+if(toolArgs.includes("--continue-failed")){
+	options.ignoreCode = true;
+}
 const overridePckManager = getArgValue("--package-manager");
 if(overridePckManager){
 	pckManager = overridePckManager;

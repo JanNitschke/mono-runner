@@ -41,12 +41,21 @@ mono --all build
 mono format --all --no-wait
 ```
 
-This will run the script on all packages but still respect the dependency order.Combine with ```--no-wait``` to run on all packages at the same time.
+This will run the script on all packages but still respect the dependency order. Combine with ```--no-wait``` to run on all packages at the same time.
 
 Arguments for mono and the script its running are split by ```--```. Everything you write behind that is passed to the script processes.
 ```bash
 mono <package> <script> -- <args>
 mono --all format --no-wait -- --tab-with=4
+```
+
+## Exit code
+
+If a script terminates with a non zero exit code (aka. fails) mono will immediately stop everything else and exit with the same code. Use ```--continue-failed``` to keep running. Mono will then exit with the hightest exit code it received.
+
+```bash
+mono <package> <script> -- <args>
+mono --all unimportant --continue-failed
 ```
 
 ## Package managers
@@ -96,7 +105,7 @@ Parallel mode will watch outPath to determine if the dev server has started.
 
 Init will alias typescript to the srcPath. 
 
-If both default to the packages folder. Return null if your resolver does not match the package.
+Both default to the packages folder. Return null if your resolver does not match the package.
 
 add a mono.config.js that lists your resolvers:
 
