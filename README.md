@@ -96,6 +96,9 @@ type Resolver = ({
 	name: string,
 	path: string,
 	dependencies: string[]
+}, {
+	readFile: (relativePath: string) => Promise<string|null>,
+	loadModule: (relativePath: string) => Promise<any|null>,
 }) => {
 	outPath?: string,
 	srcPath?: string
@@ -107,11 +110,15 @@ Init will alias typescript to the srcPath.
 
 Both default to the packages folder. Return null if your resolver does not match the package.
 
+Mono provides utility functions to read a file as string relative to the packages directory an load a module from the directory. This can be used to load configuration files. loadModule can also load typescript files
+
 add a mono.config.js that lists your resolvers:
 
 ```javascript
+import defaultResolvers from "mono-runner";
+
 export const resolvers = [
-	(pcg) => {
+	(pcg, utils) => {
 		if(pcg.dependencies.includes("@my/framework")){
 			return {
 				outPath: "./.build",
@@ -120,7 +127,8 @@ export const resolvers = [
 		}else{
 			return null;
 		}
-	}
+	},
+	...defaultResolvers
 ];
 ```
 resolvers will run top to bottom and stop at the first match.

@@ -1,12 +1,16 @@
 {
   "name": "mono-runner",
-  "version": "0.1.2",
+  "version": "0.2.2",
   "type": "module",
   "author": "Jan Nitschke",
   "scripts": {
-    "build": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js",
-    "dev": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js --watch",
-    "prepare": "bun build --target=bun ./lib/cli.ts  --outfile=./dist/cli.js"
+    "build": "bun run build:cli & bun run build:resolvers",
+    "build:cli": "bun build --target=node ./lib/cli.ts  --outfile=./dist/cli.js --external typescript --external vite",
+    "build:resolvers": "bun build --target=node ./lib/resolvers.ts  --outfile=./dist/resolvers.js --external typescript --external vite",
+    "dev": "bun dev:cli & bun dev:resolvers",
+    "dev:cli": "bun build --target=node ./lib/cli.ts  --outfile=./dist/cli.js --watch --external typescript --external vite",
+    "dev:resolvers": "bun build --target=node ./lib/resolvers.ts  --outfile=./dist/resolvers.js --watch --external typescript --external vite",
+    "prepare": "bun run build"
   },
   "repository": {
     "type": "git",
@@ -14,9 +18,10 @@
   },
   "devDependencies": {
     "bun-types": "latest",
-    "get-tsconfig": "^4.7.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.2.2"
   },
+  "types": "./resolvers.d.ts",
+  "main": "./dist/resolvers.js",
   "bin": {
     "mono": "dist/cli.js"
   }
