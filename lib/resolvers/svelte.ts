@@ -1,3 +1,4 @@
+import { PackageResolver } from "./types";
 
 export const sveltePackageResolver: PackageResolver = ({dependencies}) => {
 	if(dependencies.includes("@sveltejs/package")){

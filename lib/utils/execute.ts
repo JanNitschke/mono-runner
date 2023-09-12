@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { LocalPackage, getLocalPackages } from "./packages";
+import { LocalPackage, getLocalPackages, rootPath } from "./packages";
 import { join } from "node:path";
 import { existsSync, lstatSync } from "node:fs";
 import { drawConsole } from "./out";
@@ -47,8 +47,11 @@ const holdBeforeFolderExists = async (filePath: string, timeout: number) => {
 const spawnWorker = (runtime: string, pcg: LocalPackage, command: string, args: string[] = []) => {
 	
 	const p = spawn(runtime, ["run", command, ...args], {
-		cwd: join(process.cwd(), pcg.path),
-		env: process.env,
+		cwd: join(rootPath, pcg.path),
+		env: {
+			...process.env,
+			MONO_ROOT: rootPath
+		},
 	});
 
 	const exit = new Promise<number>((resolve) => {
@@ -72,7 +75,7 @@ const isReady = async(packageName: string, packagePath: string, packageDeps: str
 	const config = await getPackageConfig({name: packageName, path: packagePath, dependencies: packageDeps});
 
 	if(config && config.outPath){
-		const path = join(process.cwd(), packagePath, config.outPath);
+		const path = join(rootPath, packagePath, config.outPath);
 		const exists = await holdBeforeFolderExists(path, 10000);
 		if(exists){
 			return true;

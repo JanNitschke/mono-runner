@@ -1,14 +1,39 @@
 # mono-runner
 
-A script runner for mono repos that just works.
+A script runner for mono repos that just works. Use Mono to run separate compilers and dev servers for your packages at once, build only dependent packages or format everything at once. 
+
+Mono reads the configuration files from your favorite build tools and frameworks, no need to write anything new.
 
 Designed for typescript, svelte kit and svelte package. Extendable for other frameworks. Works with yarn/pnpm/bun workspaces and runs scripts with the correct package manager. 
 
-You can use Mono to run separate compilers and dev servers for your packages at once, build only dependent packages or format everything at once. No additional configuration needed.
+# setup
+add mono directly to your root package
+
+```bash
+npm i mono-runner
+yarn add mono-runner #newer versions require the -W flag
+pnpm add mono-runner
+bun add mono-runner
+```
+
+(optional) let mono-runner manage your ts-config paths:.
+
+add a postinstall script to your root package.json
+
+```json
+{
+  	...
+  	"scripts": {
+    	...
+    	"postinstall": "mono --init"
+	}
+}
+```
+
 
 # usage
 
-## Run a script
+## run a script
 
 mono automatically runs scripts for all dependencies, their dependencies, and so on...
 
@@ -49,7 +74,7 @@ mono <package> <script> -- <args>
 mono --all format --no-wait -- --tab-with=4
 ```
 
-## Exit code
+## exit code
 
 If a script terminates with a non zero exit code (aka. fails) mono will immediately stop everything else and exit with the same code. Use ```--continue-failed``` to keep running. Mono will then exit with the hightest exit code it received.
 
@@ -58,7 +83,7 @@ mono <package> <script> -- <args>
 mono --all unimportant --continue-failed
 ```
 
-## Package managers
+## package managers
 
 Mono detects your package manager using lock files in your working directory. This can be overridden using the ```--package-manager=<name>``` flag
 
@@ -67,7 +92,7 @@ mono <package> <script> -- <args>
 mono app build --package-manager=yarn
 ```
 
-## Typescript
+## typescript
 Mono can add typescript path aliases to all local packages to your ts config. It even links to the source folder of supported frameworks to allow your IDE to link to source.
 
 ```bash
@@ -89,7 +114,7 @@ mono does not fix package json exports for you. Please make sure that the export
 ```
 
 
-# Extending
+# extending
 mono currently supports automatic configuration for svelte kit and package projects. You can create custom resolvers to support your favorite frameworks or custom compilers. Just add a mono.config.js file and implement the resolver function
 ```typescript
 type Resolver = ({
@@ -115,7 +140,7 @@ Mono provides utility functions to read a file as string relative to the package
 add a mono.config.js that lists your resolvers:
 
 ```javascript
-import defaultResolvers from "mono-runner";
+import { defaultResolvers } from "mono-runner";
 
 export const resolvers = [
 	(pcg, utils) => {
@@ -132,3 +157,20 @@ export const resolvers = [
 ];
 ```
 resolvers will run top to bottom and stop at the first match.
+
+
+# integrations
+
+## sass/scss
+
+mono provides a sass custom importer. You can provide your build tool with the importer if you have any issues importing sass or scss files. Some build tools may need this (ex. svelte-preprocess).
+
+```javascript
+import { createSassImporter } from "mono-runner";
+
+...
+scss: {
+	importer: createSassImporter()	
+}
+
+```

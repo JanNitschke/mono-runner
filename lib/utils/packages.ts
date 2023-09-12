@@ -1,4 +1,5 @@
 import { access, readFile, readdir } from "node:fs/promises";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "path";
 
 export type LocalPackage = {
@@ -9,24 +10,31 @@ export type LocalPackage = {
 	scripts: string[];
 };
 
-type LocalPackageInfo = {
+export type LocalPackageInfo = {
 	[name: string]: string;
 };
+
+
+export const rootPath = process.env.MONO_ROOT || process.cwd();
 
 export const readFileJSON = async (path: string) => {
 	const data = await readFile(path, { encoding: "utf-8" });
 	return JSON.parse(data);
 };
+export const readFileJSONSync = (path: string) => {
+	const data = readFileSync(path, { encoding: "utf-8" });
+	return JSON.parse(data);
+};
 
 export const getWorkspaces = async (): Promise<string[]> => {
 	try {
-		const pJson = await readFileJSON(join(process.cwd(), "package.json"));
+		const pJson = await readFileJSON(join(rootPath, "package.json"));
 		const base = pJson.workspaces || [];
 		const workspaces =  base.map((w: string) => w.replace("/*", ""));
 
 		const existing: string[] = [];
 		await Promise.all(workspaces.map(async(w: string) => {
-			const path = join(process.cwd(), w);
+			const path = join(rootPath, w);
 			if(await access(path).then(() => true).catch(() => false)){
 				existing.push(w);
 			}
@@ -38,13 +46,39 @@ export const getWorkspaces = async (): Promise<string[]> => {
 	}
 };
 
-export const getPackageJson = async (path: string) => {
+export const getWorkspacesSync = (): string[] => {
+	try {
+		const pJson = readFileJSONSync(join(rootPath, "package.json"));
+		const base = pJson.workspaces || [];
+		const workspaces: string[] = base.map((w: string) => w.replace("/*", ""));
+
+		const existing: string[] = [];
+		workspaces.forEach((w) => {
+			const path = join(rootPath, w);
+			if(existsSync(path)){
+				existing.push(w);
+			}
+		});
+		return existing;
+	} catch (e) {
+		console.error("Please run this command in a directory with a valid package.json file.");
+		return [];
+	}
+};
+
+
+export const getPackageJson = async (path: string):Promise<any> => {
 	const pJson = await readFileJSON(join(path, "package.json"));
 	return pJson;
 };
 
+export const getPackageJsonSync = (path: string): any => {
+	const pJson = readFileJSONSync(join(path, "package.json"));
+	return pJson;
+};
+
 export const listPackages = async (workspace: string) => {
-	const root = join(process.cwd(), workspace);
+	const root = join(rootPath, workspace);
 	const dirs = await readdir(root, { withFileTypes: true });
 	const packages = dirs.filter((d) => d.isDirectory()).map((d) => d.name);
 
@@ -67,9 +101,41 @@ export const listPackages = async (workspace: string) => {
 	return packageInfo;
 };
 
+
+export const listPackagesSync = (workspace: string) => {
+	const root = join(rootPath, workspace);
+	const dirs = readdirSync(root, { withFileTypes: true });
+	const packages = dirs.filter((d) => d.isDirectory()).map((d) => d.name);
+
+	const packageJsons = packages.map((p) => {
+		try{
+			const pJson = getPackageJsonSync(join(root, p));
+			return { ...pJson, path: p};
+		}catch(e){
+			return null;
+		}
+	}).filter((p) => p !== null);
+
+	const packageInfo: LocalPackageInfo = {};
+
+	packageJsons.forEach((p) => {
+		const { name, path } = p;
+		packageInfo[name] = `${workspace}/${path}`;
+	});
+	return packageInfo;
+};
+
+
 export const getWorkspacePackages = async (): Promise<LocalPackageInfo> => {
 	const workspaces = await getWorkspaces();
 	const packages = await Promise.all(workspaces.map((w) => listPackages(w)));
+	const info = packages.reduce((acc, cur) => ({ ...acc, ...cur }), {});
+	return info;
+};
+
+export const getWorkspacePackagesSync = (): LocalPackageInfo => {
+	const workspaces = getWorkspacesSync();
+	const packages = workspaces.map((w) => listPackagesSync(w));
 	const info = packages.reduce((acc, cur) => ({ ...acc, ...cur }), {});
 	return info;
 };
@@ -86,7 +152,7 @@ const formatPackageInfo = async(info: LocalPackageInfo): Promise<LocalPackage[]>
 
 	const prms = packages.map(async(pcg: LocalPackage) => {
 		const { path } = pcg;
-		const root = join(process.cwd(), path);
+		const root = join(rootPath, path);
 		const pJson = await getPackageJson(root);
 		const { dependencies = {}, devDependencies = {} } = pJson;
 		const deps = Object.keys({ ...dependencies, ...devDependencies });

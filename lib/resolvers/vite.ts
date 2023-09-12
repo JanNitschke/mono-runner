@@ -1,4 +1,6 @@
 import { join } from "path";
+import { rootPath } from "../utils/packages";
+import { PackageConfig, PackageResolver } from "./types";
 
 export const viteResolver: PackageResolver = async({dependencies, path}, {loadModule}) => {
 	if(dependencies.includes("vite")){
@@ -8,9 +10,9 @@ export const viteResolver: PackageResolver = async({dependencies, path}, {loadMo
 		if(!vite){
 			return null;
 		}
-		let config = await vite.loadConfigFromFile({mode: "production", command: "build"}, join(process.cwd(), path, "vite.config.js")).catch(() => null);
+		let config = await vite.loadConfigFromFile({mode: "production", command: "build"}, join(rootPath, path, "vite.config.js")).catch(() => null);
 		if(!config){
-			config = await vite.loadConfigFromFile({mode: "production", command: "build"}, join(process.cwd(),path, "vite.config.ts")).catch(() => null);
+			config = await vite.loadConfigFromFile({mode: "production", command: "build"}, join(rootPath,path, "vite.config.ts")).catch(() => null);
 		}
 
 

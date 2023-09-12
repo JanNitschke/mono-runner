@@ -1,5 +1,5 @@
 import { writeFileSync } from "fs";
-import { getPackageJson, getWorkspacePackages } from "./packages";
+import { getPackageJson, getWorkspacePackages, rootPath } from "./packages";
 import { join,  } from "path";
 import { getPackageConfig } from "./config";
 import { getTsconfig } from "get-tsconfig";
@@ -10,7 +10,7 @@ export const genAlias = async (alias: boolean) => {
 	const prms = Object.keys(info).map(async(name) => {
 		const path = info[name];
 
-		const pcgJson = getPackageJson(join(process.cwd(), path));
+		const pcgJson = getPackageJson(join(rootPath, path));
 		const { dependencies = {}, devDependencies = {} } = await pcgJson;
 		const deps = Object.keys({ ...dependencies, ...devDependencies });
 		
@@ -38,9 +38,9 @@ export const genAlias = async (alias: boolean) => {
 
 	if(alias){
 		const out = base;
-		writeFileSync(join(process.cwd(), "tsconfig.alias.json"), JSON.stringify(out, null, 2));
+		writeFileSync(join(rootPath, "tsconfig.alias.json"), JSON.stringify(out, null, 2));
 	}else{
-		const tscPath = join(process.cwd(), "tsconfig.json");
+		const tscPath = join(rootPath, "tsconfig.json");
 		const tsConfig = getTsconfig(tscPath);
 
 		if(!tsConfig){
@@ -62,7 +62,7 @@ export const genAlias = async (alias: boolean) => {
 			config.compilerOptions.paths = {...config.compilerOptions.paths, ...paths};
 		}
 
-		writeFileSync(join(process.cwd(), "tsconfig.json"), JSON.stringify(config, null, 2));
+		writeFileSync(join(rootPath, "tsconfig.json"), JSON.stringify(config, null, 2));
 
 	}
 	

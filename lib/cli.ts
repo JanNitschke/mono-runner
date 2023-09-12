@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-import { genAlias } from "./alias";
-import { ExecOptions, execute } from "./execute";
+import { genAlias } from "./utils/alias";
+import { ExecOptions, execute } from "./utils/execute";
 import { argv } from "node:process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { rootPath } from "./utils/packages";
 
 const [runtime, _file, ...args] = argv;
 
 const hasLockfile = (file: string) => {
-	return existsSync(join(process.cwd(), file));
+	return existsSync(join(rootPath, file));
 }
 
 let pckManager = "npm";
-if(process.isBun || hasLockfile("bun.lockb")){
+if((process as any).isBun || hasLockfile("bun.lockb")){
 	pckManager = "bun";
 }else if(hasLockfile("yarn.lock")){
 	pckManager = "yarn";

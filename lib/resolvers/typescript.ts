@@ -1,8 +1,10 @@
 import { join } from "path";
+import { rootPath } from "../utils/packages";
+import { PackageConfig, PackageResolver } from "./types";
 
 export const typescriptResolver: PackageResolver = async({dependencies, path}, {}) => {
 	if(dependencies.includes("typescript")){
-		const tscPath = join(process.cwd(), path, "tsconfig.json");
+		const tscPath = join(rootPath, path, "tsconfig.json");
 		const typescript = await import("typescript");
 		const ts = typescript.default;		
 		const tsConfig = ts.readConfigFile(tscPath, ts.sys.readFile);

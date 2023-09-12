@@ -2,6 +2,8 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { defaultResolvers } from "./resolvers";
 import { readFile, unlink, writeFile } from "node:fs/promises";
+import { rootPath } from "./packages";
+import { PackageConfig, PackageInfo, PackageResolver, ResolverUtils } from "../resolvers/types";
 
 const loadResolvers = async(path: string): Promise<PackageResolver[]|null> => {
 	if(!existsSync(path)){
@@ -17,12 +19,12 @@ const loadResolvers = async(path: string): Promise<PackageResolver[]|null> => {
 
 export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|null> => {
 
-	const configPath = join(process.cwd(), "mono.config.js");
+	const configPath = join(rootPath, "mono.config.js");
 
 	const resolvers = (await loadResolvers(configPath)) || defaultResolvers;
 
 	const readPackageFile = async(path: string): Promise<string|null> => {
-		const filePath = join(process.cwd(),pcg.path, path);
+		const filePath = join(rootPath,pcg.path, path);
 		if(!existsSync(filePath)){
 			return null;
 		}
@@ -43,7 +45,7 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 			fileName: path,
 			compilerOptions: {
 				outFile: "out.js",
-				sourceRoot: join(process.cwd(), pcg.path),
+				sourceRoot: join(rootPath, pcg.path),
 				target: ts.ScriptTarget.ESNext,
 			}
 		}).outputText;
@@ -52,7 +54,7 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 		if(!mod){
 			return null;
 		}
-		const tempPath = join(process.cwd(), pcg.path, `${path}.mono.temp.js`);
+		const tempPath = join(rootPath, pcg.path, `${path}.mono.temp.js`);
 
 		try{
 			await writeFile(tempPath, mod);
@@ -72,7 +74,7 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 	}
 
 	const loadModule = async(path: string): Promise<any|null> => {
-		const filePath = join(process.cwd(),pcg.path, path);
+		const filePath = join(rootPath,pcg.path, path);
 		if(path.endsWith(".ts")){
 			return await loadTypescript(path).catch((e) => {
 				console.log(e);
