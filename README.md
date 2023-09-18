@@ -22,11 +22,11 @@ add a postinstall script to your root package.json
 
 ```json
 {
-  	...
-  	"scripts": {
-    	...
-    	"postinstall": "mono --init"
-	}
+  //...
+  "scripts": {
+    //...
+    "postinstall": "mono --init"
+  }
 }
 ```
 

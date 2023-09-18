@@ -77,7 +77,6 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 		const filePath = join(rootPath,pcg.path, path);
 		if(path.endsWith(".ts")){
 			return await loadTypescript(path).catch((e) => {
-				console.log(e);
 				return null;
 			});
 		}
