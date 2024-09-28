@@ -1,6 +1,6 @@
 {
   "name": "mono-runner",
-  "version": "0.3.1",
+  "version": "0.5.4",
   "type": "module",
   "author": "Jan Nitschke",
   "keywords": [
@@ -16,21 +16,22 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "bun build --target=node ./lib/cli.ts ./lib/index.ts --outdir=./dist --external typescript --external vite",
-    "dev": "bun build --target=node ./lib/cli.ts ./lib/index.ts --outdir=./dist --external typescript --external vite --watch",
-    "prepare": "bun run build"
+    "build": "bun ./build.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/JanNitschke/mono-runner.git"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.38.2",
     "bun-types": "latest",
-    "typescript": "^5.2.2"
+    "typescript": "^5.5.0",
+    "vite": "^4.5.0"
   },
   "types": "./lib/index.ts",
   "main": "./dist/index.js",
   "bin": {
-    "mono": "dist/cli.js"
+    "mono": "dist/cli.js",
+    "mono-tsc": "dist/tsc.mjs"
   }
 }

@@ -1,34 +1,103 @@
 import { writeFileSync } from "fs";
-import { getPackageJson, getWorkspacePackages, rootPath } from "./packages";
-import { join,  } from "path";
+import { getLocalPackages, getPackageJson, getWorkspacePackages, rootPath } from "./packages";
+import { join, relative,  } from "path";
 import { getPackageConfig } from "./config";
-import { getTsconfig } from "get-tsconfig";
+import ts from "typescript";
+import { lstat } from "fs/promises";
 
-export const genAlias = async (alias: boolean) => {
-	const info = await getWorkspacePackages();
-	const paths: Record<string, string[]> = {};
-	const prms = Object.keys(info).map(async(name) => {
-		const path = info[name];
-
-		const pcgJson = getPackageJson(join(rootPath, path));
-		const { dependencies = {}, devDependencies = {} } = await pcgJson;
-		const deps = Object.keys({ ...dependencies, ...devDependencies });
+const addToTsConfig = (name: string, folderPath: string, paths: Record<string, string>) => {
+	const tscPath = join(rootPath, folderPath, "tsconfig.json");
+	const tsConfig = ts.readConfigFile(tscPath, ts.sys.readFile);
+	if(!tsConfig){
+		console.warn(`could parse tsconfig.json file for ${name}`);
+		return;
+	}
+	const config = tsConfig.config;
 		
-		const config = await getPackageConfig({name, path, dependencies: deps});
+		if(!config.compilerOptions){
+			config.compilerOptions = {};
+		}
+		if(!config.compilerOptions.baseUrl){
+			config.compilerOptions.baseUrl = "./";
+		}			
+		if(!config.compilerOptions.paths){
+			config.compilerOptions.paths = paths;
+		}else{			
+			config.compilerOptions.paths = {...config.compilerOptions.paths, ...paths};
+		}
 
+		writeFileSync(tscPath, JSON.stringify(config, null, 2));
+
+};
+
+
+
+
+
+
+export const genAlias = async (dryrun: boolean) => {
+	const paths: Record<string, string> = {};
+
+	const packages = await getLocalPackages();
+	const allPackageNames = packages.map((p) => p.name);
+	const dependencies = packages.flatMap((p) => p.dependencies.filter((d) => allPackageNames.includes(d)));	
+
+	const pathPromises = packages.map(async(p) => {
+		const {name, path} = p;
+		if(!dependencies.includes(name)){
+			// only include packages that others are dependent on
+			console.info(`No packages depend on ${name}, skipping...`);
+			return;
+		}
+		const config = await getPackageConfig(p);
+		
 		if(!config || !config.srcPath){
-			paths[`${name}/*`] = [`${path}/*`];
-			paths[name] = [path];
+			paths[name] = path;
 		}else{
 			const {srcPath} = config;
 			const combined = join(path, srcPath);
-			paths[`${name}/*`] = [`${combined}/*`];
-			paths[name] = [combined];
+			paths[name] = combined;
 		}
 	});
 
-	await Promise.all(prms);
+	await Promise.all(pathPromises);
 
+
+	const promises = packages.map(async (p) => {
+		const {name, path, localDependencies} = p;
+		const tsconfig = await lstat(join(rootPath, path, "tsconfig.json")).catch(() => null);
+		if(!tsconfig || !tsconfig.isFile()){
+			console.info(`No tsconfig.json file found in ${name}, skipping...`);
+			return;
+		}
+		const deps = localDependencies.map(d => {
+			const {name} = d;
+			const absPath = paths[name];
+			const relPath = relative(path, absPath);
+			return [name, relPath];
+		}).filter((d) => d !== undefined).reduce((acc, [name, out]) => {
+			return {...acc, [name]: [out], [`${name}/*`]: [`${out}/*`]};
+		}, {});
+
+		if(Object.keys(deps).length === 0){
+			if(dryrun){
+				console.log(`No local dependencies found for ${name}, skipping...`);
+			}
+			return;
+		}
+
+		if(dryrun){
+			console.log(`--- adding to ${name} tsconfig.json --- `);
+			console.log(JSON.stringify(deps, null, 2));
+			console.log(`------------`);
+		}else{
+			await addToTsConfig(name, path, deps);
+		}
+		
+	});
+	await Promise.all(promises);
+
+	/*
 	const base = {
 		compilerOptions: {
 			baseUrl: "./",
@@ -41,7 +110,7 @@ export const genAlias = async (alias: boolean) => {
 		writeFileSync(join(rootPath, "tsconfig.alias.json"), JSON.stringify(out, null, 2));
 	}else{
 		const tscPath = join(rootPath, "tsconfig.json");
-		const tsConfig = getTsconfig(tscPath);
+		const tsConfig = ts.readConfigFile(tscPath, ts.sys.readFile);
 
 		if(!tsConfig){
 			console.log("could not find tsconfig.json file, creating one...");
@@ -64,6 +133,6 @@ export const genAlias = async (alias: boolean) => {
 
 		writeFileSync(join(rootPath, "tsconfig.json"), JSON.stringify(config, null, 2));
 
-	}
+	}*/
 	
 };

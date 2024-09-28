@@ -8,6 +8,7 @@ export type LocalPackage = {
 	localDependencies: LocalPackage[];
 	dependencies: string[];
 	scripts: string[];
+	scriptCommands: Record<string, string>;
 };
 
 export type LocalPackageInfo = {
@@ -16,6 +17,7 @@ export type LocalPackageInfo = {
 
 
 export const rootPath = process.env.MONO_ROOT || process.cwd();
+
 
 export const readFileJSON = async (path: string) => {
 	const data = await readFile(path, { encoding: "utf-8" });
@@ -147,7 +149,8 @@ const formatPackageInfo = async(info: LocalPackageInfo): Promise<LocalPackage[]>
 		path: info[name],
 		localDependencies: [],
 		dependencies: [],
-		scripts: []
+		scripts: [],
+		scriptCommands: {}
 	}));
 
 	const prms = packages.map(async(pcg: LocalPackage) => {
@@ -160,6 +163,7 @@ const formatPackageInfo = async(info: LocalPackageInfo): Promise<LocalPackage[]>
 
 		pcg.localDependencies = locals;
 		pcg.dependencies = deps;
+		pcg.scriptCommands = pJson.scripts || {};
 		pcg.scripts = Object.keys(pJson.scripts || {});
 	});
 	await Promise.all(prms);

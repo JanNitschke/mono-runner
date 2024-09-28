@@ -1,6 +1,5 @@
 import type { StreamInfo } from "./execute";
 
-
 const MAX_WIDTH = process.stdout.columns || 160;
 const getWidthRegex = (pcg: string) => {
 	const width = MAX_WIDTH -  pcg.length - 2;
@@ -16,13 +15,15 @@ const packageToColor = (name: string) => {
 	return colors[idx];
 };
 
-
 export const drawConsole = (streams: StreamInfo[]) => {
+	
+	
 	streams.forEach((s) => {
 		const {stream, level, package: pcg} = s;
 		const encoder = new TextDecoder();
 		const color = packageToColor(pcg);
 		const regex = getWidthRegex(pcg)
+
 		const push = (chunk: Uint8Array) => {
 			const current = encoder.decode(chunk);
 			const lines = current.split("\n").flatMap((line) => {

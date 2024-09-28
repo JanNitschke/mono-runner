@@ -4,6 +4,7 @@ import { defaultResolvers } from "./resolvers";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import { rootPath } from "./packages";
 import { PackageConfig, PackageInfo, PackageResolver, ResolverUtils } from "../resolvers/types";
+import { importFromPackage, loadBundled } from "./import";
 
 const loadResolvers = async(path: string): Promise<PackageResolver[]|null> => {
 	if(!existsSync(path)){
@@ -30,7 +31,6 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 		}
 		return await readFile(filePath, "utf-8");
 	};
-
 
 	const loadTypescript = async(path: string) => {
 
@@ -86,10 +86,15 @@ export const getPackageConfig = async(pcg: PackageInfo): Promise<PackageConfig|n
 		return await import(filePath).catch(() => null);
 	};
 
+	const lB = (file: string):Promise<any> => {
+		return loadBundled(pcg.path, file);
+	};
 
 	const utils: ResolverUtils = {
 		readFile: readPackageFile,
 		loadModule: loadModule,
+		loadBundled: lB,
+		loadDependency: (dependency: string) => importFromPackage(pcg.path, dependency)
 	};
 	
 	for(let idx = 0; idx < resolvers.length; idx++){

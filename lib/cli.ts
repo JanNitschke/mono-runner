@@ -55,11 +55,10 @@ const overridePckManager = getArgValue("--package-manager");
 if(overridePckManager){
 	pckManager = overridePckManager;
 }
-console.log("running scripts using:", pckManager);
 console.log("---------");
 
 if(toolArgs.includes("--init")){
-	genAlias(toolArgs.includes("--alias"));	
+	genAlias(toolArgs.includes("--dry-run"));	
 }else{
-	await execute(pckManager, project, command, childArgs, options)
+	execute(pckManager, project, command, childArgs, options)
 }

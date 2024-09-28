@@ -22,9 +22,7 @@ add a postinstall script to your root package.json
 
 ```json
 {
-  //...
   "scripts": {
-    //...
     "postinstall": "mono --init"
   }
 }
@@ -98,10 +96,10 @@ Mono can add typescript path aliases to all local packages to your ts config. It
 ```bash
 mono --init
 ```
-This will modify or create a tsconfig.json. If you don't want mono to write directly to jour tsconfig use the ```--alias``` flag to create a tsconfig.alias.json instead. You can then link to this file in your tscofig.json using the extends field.
+This will scann all packages for tsconfig.json files in the root and add path aliases to the source folder of local dependencies. If you don't want mono to write directly to jour tsconfig use the ```--dry-run``` to preview the changes. You can then copy them into the tsconfig files or run the command again without ```--dry-run``` to accept the changes.
 
 ```bash
-mono --init --alias
+mono --init --dry-run
 ```
 
 # package.json
