@@ -62,7 +62,14 @@ const findNodeBin = async (path: string, name: string):Promise<string|false> => 
 	return false;
 };
 
-const parseScript = (script: string) => {
+type ScriptInfo = {
+	exec?: string;
+	args: string[];
+	envs: Record<string, string>;
+}
+
+
+const parseScript = (script: string): ScriptInfo => {
 	if(!script){
 		return {
 			exec: undefined,
@@ -71,17 +78,27 @@ const parseScript = (script: string) => {
 		};
 	}
 	const parts = script.split(" ");
+	const hasAnd = script.includes("&");
+
 	const envs: Record<string, string> = {};
 	for (let idx = 0; idx < parts.length; idx++) {
 		if (parts[idx].includes("=")) {
 			const [env, value] = parts[idx].split("=");
 			envs[env] = value;
 		}else{
-			return {
-				exec: parts[idx],
-				args: parts.slice(idx + 1),
-				envs
-			};
+			if(hasAnd){
+				return {
+					exec: undefined,
+					args: parts.slice(idx),
+					envs
+				};
+			}else{
+				return {
+					exec: parts[idx],
+					args: parts.slice(idx + 1),
+					envs
+				};
+			}
 		}
 	}
 	return {
@@ -112,7 +129,7 @@ const spawnWorker = async (
 		const script = pcg.scriptCommands[command];
 
 
-		const {exec, args: execArgs, envs} = parseScript(script.trim());
+		let {exec, args: execArgs, envs} = parseScript(script.trim());
 		const env: any = {
 			...process.env,
 			...envs
@@ -123,6 +140,7 @@ const spawnWorker = async (
 
 		if(!bin){
 			console.log(`Could not directly start ${pcg.name} - starting using ${runtime}`);
+			execArgs = ["run", command, ...args];
 		}
 
 		console.log(`Running ${pcg.name} - ${command}:  ${bin || runtime} ${execArgs.join(" ")}`);
