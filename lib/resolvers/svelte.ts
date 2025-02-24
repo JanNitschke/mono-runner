@@ -1,7 +1,7 @@
 import { PackageResolver } from "./types";
 
-export const collappPackageResolver: PackageResolver = ({dependencies}) => {
-	if(dependencies.includes("@collapp/package")){
+export const klarPackageResolver: PackageResolver = ({dependencies}) => {
+	if(dependencies.includes("@klar/package")){
 		return {
 			outPath: "dist",
 			srcPath: "src/lib",

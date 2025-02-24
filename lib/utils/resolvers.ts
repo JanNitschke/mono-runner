@@ -1,9 +1,9 @@
-import { collappPackageResolver, svelteKitResolver, sveltePackageResolver } from "../resolvers/svelte";
+import { klarPackageResolver, svelteKitResolver, sveltePackageResolver } from "../resolvers/svelte";
 import { typescriptResolver } from "../resolvers/typescript";
 import { viteResolver } from "../resolvers/vite";
 
 export const defaultResolvers = [
-	collappPackageResolver,
+	klarPackageResolver,
 	sveltePackageResolver,
 	svelteKitResolver,
 	viteResolver,
