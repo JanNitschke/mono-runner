@@ -72,6 +72,8 @@ mono <package> <script> -- <args>
 mono --all format --no-wait -- --tab-with=4
 ```
 
+Use the argument `--quiet` to reduce the output to errors only
+
 ## exit code
 
 If a script terminates with a non zero exit code (aka. fails) mono will immediately stop everything else and exit with the same code. Use ```--continue-failed``` to keep running. Mono will then exit with the hightest exit code it received.
